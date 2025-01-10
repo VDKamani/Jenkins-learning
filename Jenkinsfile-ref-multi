@@ -1,0 +1,49 @@
+pipeline {
+    agent any
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+        stage('Identify Branch') {
+            steps {
+                script {
+                    echo "Building branch: ${env.GIT_BRANCH}"
+                }
+            }
+        }
+        stage("Master") {
+            when {
+                expression { return env.GIT_BRANCH == 'origin/main' }
+            }
+            steps {
+                echo "This is from Master branch"
+            }
+        }
+        stage("Dev") {
+            when {
+                expression { return env.GIT_BRANCH == 'origin/dev' }
+            }
+            steps {
+                echo "This is from Dev branch"
+            }
+        }
+        stage("Stage") {
+            when {
+                expression { return env.GIT_BRANCH == 'origin/stage' }
+            }
+            steps {
+                echo "This is from Stage branch"
+            }
+        }
+        stage("Preprod") {
+            when {
+                expression { return env.GIT_BRANCH == 'origin/pre-prod' }
+            }
+            steps {
+                echo "This is from Preprod branch"
+            }
+        }
+    }
+}

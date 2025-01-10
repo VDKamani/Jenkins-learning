@@ -1,0 +1,44 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Test Echo') {
+            steps {
+                script {
+                    echo "Branch name: ${env.BRANCH_NAME}"
+
+                    // Test based on the branch name
+                    if (env.BRANCH_NAME == 'main') {
+                        echo "This is the main branch"
+                    } else if (env.BRANCH_NAME == 'dev') {
+                        echo "This is the dev branch"
+                    } else if (env.BRANCH_NAME == 'preprod') {
+                        echo "This is the preprod branch"
+                    } else {
+                        echo "This is an unknown branch: ${env.BRANCH_NAME}"
+                    }
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            echo "The pipeline has completed."
+        }
+
+        success {
+            echo "The pipeline has succeeded!"
+        }
+
+        failure {
+            echo "The pipeline has failed."
+        }
+    }
+}

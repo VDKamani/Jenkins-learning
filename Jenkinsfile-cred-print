@@ -1,0 +1,47 @@
+pipeline {
+    agent any
+    environment {
+        stag = "Dev"
+    }
+    parameters {
+        string(name: 'name', defaultValue: 'Jenkins', description: 'Name of the person')
+        choice(name: 'city', choices: ['Ahmedabad', 'Rajkot', 'Junagadh'], description: 'Select the city')
+        password(name: 'password', defaultValue: 'admin', description: 'Enter the password')
+        credentials(name: 'cred', description: 'Select GitHub credentials')
+    }
+    stages {
+        stage('Dev') {
+            steps {
+                script {
+                    echo "Hello ${params.name}"
+                    echo "$stag"
+                }
+            }
+        }
+        stage('Stage') {
+            environment {
+                stag = "Stage"
+            }
+            steps {
+                script {
+                    echo "Hello ${params.city}"
+                    echo "$stag"
+                }
+            }
+        }
+        stage('Prod') {
+            steps {
+                script {
+                withCredentials([
+                    usernameColonPassword(
+                    credentialsId: 'mail',
+                    variable: 'userpass')
+                ]) {
+                    print 'userpass=' + userpass
+                    print 'userpass.collect { it }=' + userpass.collect { it }
+                }
+                }
+            }
+        }
+    }
+}

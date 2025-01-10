@@ -1,0 +1,53 @@
+// make a pipeline where it will be devided into 4 stage dev,stage,preprode,prode where it will listen to perticular branchs push and will run individulaly
+// they all will listen from one github repo using credentials and hit hub repo have 4 branch.
+// master will run prod
+// pre-prod will run pre-prod
+// dev run dev
+// stage run stage
+pipeline {
+    agent any
+
+    stages {
+
+        stage('dev') {
+            when {
+                expression { return env.GIT_BRANCH.replace("origin/", "") == 'dev' }
+            }
+            steps {
+                echo 'Running dev'
+            }
+        }
+        stage('stage') {
+            when {
+                expression { return env.GIT_BRANCH.replace("origin/", "") == 'stage' }
+            }
+            steps {
+                echo 'Running stage'
+            }
+        }
+        stage('pre-prod') {
+            when {
+                expression { return env.GIT_BRANCH.replace("origin/", "") == 'pre-prod' }
+            }
+            steps {
+                echo 'Running pre-prod'
+            }
+        }
+        stage('prod') {
+            when {
+                expression { return env.GIT_BRANCH.replace("origin/", "") == 'main' }
+            }
+            steps {
+                echo 'Running prod'
+            }
+        }
+    }
+    post {
+        success {
+            echo 'Pipeline finished'
+        }
+        failure {
+            echo 'Pipeline failed'
+        }
+    }
+}

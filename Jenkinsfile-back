@@ -1,0 +1,89 @@
+pipeline {
+    agent any
+
+    environment {
+        REPO_URL = 'Repo URL'
+        APP_NAME = 'html-app'
+        DOCKER_IMAGE_NAME = "${APP_NAME}:latest"
+        AWS_REGION = 'ap-south-1'
+        ECR_REPO_NAME = 'viral'
+        ECR_URL = 'ecr_uri/${ECR_REPO_NAME}'
+        EC2_USER = 'USER'
+        EC2_HOST = 'IP'
+        DEPLOY_DIR = '/var/www/${APP_NAME}'
+    }
+
+    stages {
+        stage('Clone Repository') {
+            steps {
+                echo 'Cloning the Git repository...'
+                git url: "${REPO_URL}", branch: 'main', credentialsId: '95956f92-a2b2-43cb-b28f'
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    echo 'Building the Docker image...'
+                    sh "docker build -t ${DOCKER_IMAGE_NAME} ."
+                }
+            }
+        }
+
+        stage('Push Docker Image to ECR') {
+            steps {
+                script {
+                    echo 'Authenticating and pushing Docker image to ECR...'
+                    withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws_cred_ecr']]) {
+                    sh """
+                    aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_URL}
+                    docker tag ${DOCKER_IMAGE_NAME} ${ECR_URL}:latest
+                    docker push ${ECR_URL}:latest
+                    """
+                    }
+                }
+            }
+        }
+
+       stage('Deploy on EC2') {
+    steps {
+        sshPublisher(
+            publishers: [
+                sshPublisherDesc(
+                    configName: 'docker-server',
+                    transfers: [
+                        sshTransfer(
+                            cleanRemote: false,
+                            execCommand: '''
+                            bash -c '
+                            ECR_URL="enter_ecr_uri"
+                            APP_NAME="html-app"
+                            aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin $ECR_URL
+                            docker pull $ECR_URL:latest
+                            docker stop $APP_NAME || true
+                            docker rm $APP_NAME || true
+                            docker run -d --name $APP_NAME -p 80:80 $ECR_URL:latest
+                            '
+                            ''',
+                            execTimeout: 120000
+                        )
+                    ],
+                    verbose: true
+                )
+            ]
+        )
+    }
+}
+
+                
+    }
+
+    post {
+        success {
+            echo 'Pipeline completed successfully.'
+        }
+        failure {
+            echo 'Pipeline failed.'
+        }
+    }
+}

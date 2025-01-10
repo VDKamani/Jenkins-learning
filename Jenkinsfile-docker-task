@@ -1,0 +1,50 @@
+// Created the multistage build using the pipeline as a code where stages are dev , stae , prod
+// In dev it will print the value of globle paramater
+// In stage it will print the value of stage parameter
+// In prod it will print the value of date command , and the parameter that is asked in the input
+// parameter should be name and city and password , city will have 3 optiojn ahemdabad rajkot and junagad
+// it should ask to add credentials while building and it should be store into the jenkins credential manager
+// it should be able to access the credentials from the jenkins credential manager
+
+pipeline {
+    agent any
+    environment {
+        stag = "Dev"
+    }
+    parameters {
+        string(name: 'name', defaultValue: 'Jenkins', description: 'Name of the person')
+        choice(name: 'city', choices: ['Ahmedabad', 'Rajkot', 'Junagadh'], description: 'Select the city')
+        password(name: 'password', defaultValue: 'admin', description: 'Enter the password')
+    }
+    stages {
+        stage('Dev') {
+            steps {
+                script {
+                    echo "Hello ${name}"
+                    echo "$stag"
+                }
+            }
+        }
+        stage('Stage') {
+            environment{
+                stag = "Stage"
+            }
+            steps {
+                script {
+                    echo "Hello ${city}"
+                    echo "$stag"
+                }
+            }
+        }
+        stage('Prod') {
+            steps {
+                script {
+                    echo "Hello ${name}"
+                    echo " ${city}"
+                    echo " ${password}"
+                    sh "date"
+                }
+            }
+        }
+    }
+}
